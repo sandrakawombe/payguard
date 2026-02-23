@@ -1,0 +1,160 @@
+services:
+
+  # ==================== DATABASES ====================
+
+  postgres-users:
+    image: postgres:15-alpine
+    container_name: payguard-postgres-users
+    environment:
+      POSTGRES_DB: payguard_users
+      POSTGRES_USER: payguard
+      POSTGRES_PASSWORD: payguard_secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payguard -d payguard_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-payments:
+    image: postgres:15-alpine
+    container_name: payguard-postgres-payments
+    environment:
+      POSTGRES_DB: payguard_payments
+      POSTGRES_USER: payguard
+      POSTGRES_PASSWORD: payguard_secret
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payguard -d payguard_payments"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-fraud:
+    image: postgres:15-alpine
+    container_name: payguard-postgres-fraud
+    environment:
+      POSTGRES_DB: payguard_fraud
+      POSTGRES_USER: payguard
+      POSTGRES_PASSWORD: payguard_secret
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_fraud_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payguard -d payguard_fraud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-notifications:
+    image: postgres:15-alpine
+    container_name: payguard-postgres-notifications
+    environment:
+      POSTGRES_DB: payguard_notifications
+      POSTGRES_USER: payguard
+      POSTGRES_PASSWORD: payguard_secret
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_notifications_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payguard -d payguard_notifications"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-reconciliation:
+    image: postgres:15-alpine
+    container_name: payguard-postgres-reconciliation
+    environment:
+      POSTGRES_DB: payguard_reconciliation
+      POSTGRES_USER: payguard
+      POSTGRES_PASSWORD: payguard_secret
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_reconciliation_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payguard -d payguard_reconciliation"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== REDIS ====================
+
+  redis:
+    image: redis:7-alpine
+    container_name: payguard-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== KAFKA ====================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: payguard-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: payguard-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: payguard-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: payguard-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # ==================== EMAIL ====================
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: payguard-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres_users_data:
+  postgres_payments_data:
+  postgres_fraud_data:
+  postgres_notifications_data:
+  postgres_reconciliation_data:
+  redis_data:
