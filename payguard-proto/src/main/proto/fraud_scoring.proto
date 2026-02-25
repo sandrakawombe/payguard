@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package com.payguard.fraud;
+
+option java_multiple_files = true;
+option java_package = "com.payguard.proto.fraud";
+option java_outer_classname = "FraudScoringProto";
+
+service FraudScoringService {
+    // Synchronous scoring — called for every payment in the critical path
+    rpc ScoreTransaction(FraudScoreRequest) returns (FraudScoreResponse);
+}
+
+message FraudScoreRequest {
+    string transaction_id = 1;
+    string merchant_id = 2;
+    int64  amount_cents = 3;
+    string currency = 4;
+    string customer_email = 5;
+    string merchant_category = 6;
+    string country = 7;
+    int64  timestamp = 8;
+}
+
+message FraudScoreResponse {
+    string transaction_id = 1;
+    double fraud_score = 2;
+    string decision = 3;
+    repeated string contributing_factors = 4;
+    string model_version = 5;
+    int32  latency_ms = 6;
+    bool   fallback_used = 7;
+}
