@@ -1,0 +1,43 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+
+  # ===== DATABASE =====
+  datasource:
+    url: jdbc:postgresql://localhost:5433/payguard_users
+    username: payguard
+    password: payguard_secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ===== KAFKA =====
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# ===== JWT =====
+jwt:
+  secret: payguard-jwt-secret-key-that-is-at-least-256-bits-long-for-hmac-sha256
+  expiration: 86400000  # 24 hours in milliseconds
+
+
+
+# ===== ACTUATOR =====
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
