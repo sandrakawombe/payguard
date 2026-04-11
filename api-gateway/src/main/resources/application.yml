@@ -1,0 +1,77 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+            redis-rate-limiter.requestedTokens: 1
+            key-resolver: "#{@merchantKeyResolver}"
+
+      routes:
+        # ===== USER SERVICE ROUTES =====
+        - id: user-auth
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=0
+
+        - id: user-profile
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=0
+
+        # ===== PAYMENT SERVICE ROUTES =====
+        - id: payment-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/payments/**
+          filters:
+            - StripPrefix=0
+
+        - id: stripe-webhooks
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/webhooks/**
+          filters:
+            - StripPrefix=0
+
+        # ===== FRAUD ENGINE ROUTES (admin/debug only) =====
+        - id: fraud-engine
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/fraud/**
+          filters:
+            - StripPrefix=0
+
+        # ===== RECONCILIATION SERVICE ROUTES =====
+        - id: reconciliation-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/reconciliation/**
+          filters:
+            - StripPrefix=0
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: payguard-jwt-secret-key-that-is-at-least-256-bits-long-for-hmac-sha256
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
