@@ -1,0 +1,52 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/payguard_payments
+    username: payguard
+    password: payguard_secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+# Stripe test mode — no real money
+stripe:
+  api-key: sk_test_REPLACE_WITH_YOUR_TEST_KEY
+  webhook-secret: whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET
+
+# gRPC client — connects to Fraud Engine
+grpc:
+  client:
+    fraud-engine:
+      address: static://localhost:9083
+      negotiation-type: plaintext
+
+# Fraud scoring fallback
+fraud:
+  fallback:
+    max-amount-cents: 10000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
