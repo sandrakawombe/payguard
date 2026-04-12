@@ -1,0 +1,54 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: fraud-engine
+
+  datasource:
+    url: jdbc:postgresql://localhost:5435/payguard_fraud
+    username: payguard
+    password: payguard_secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+grpc:
+  server:
+    port: 9083
+
+# Fraud scoring thresholds
+fraud:
+  thresholds:
+    approve-max: 0.3
+    review-max: 0.7
+  cache:
+    ttl-seconds: 300
+  model:
+    version: "rules-v1.0.0"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
